@@ -125,9 +125,9 @@ def call_gemini_with_prompt(prompt: str, input_text: str):
     return(formatted_response)
 
 
-@app.get("/root")
+@app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello Our Medi Chatbot is live. For API doc go to https://medicine-ai.onrender.com/docs"}
 
 @app.post("/answer")
 async def generate_answer(query: Query = Body(...)):
