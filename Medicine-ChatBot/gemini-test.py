@@ -125,7 +125,7 @@ def call_gemini_with_prompt(prompt: str, input_text: str):
     return(formatted_response)
 
 
-@app.get("/")
+@app.get("/root")
 async def root():
     return {"message": "Hello World"}
 
