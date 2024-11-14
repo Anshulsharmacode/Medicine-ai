@@ -1,5 +1,4 @@
 import re
-
 import requests
 import google.generativeai as genai
 import os
@@ -81,6 +80,7 @@ def load_medicines_from_file(filepath):
 
 medicines = load_medicines_from_file('new_output_with_uuid.json')
 
+
 def search_medicines(criteria, limit=20):
     results = []
     print(medicines[0])
@@ -93,8 +93,6 @@ def search_medicines(criteria, limit=20):
             break
             
     return results
-
-
 
 def extract_json_from_text(input_text):
     # Find the text between curly brackets
@@ -120,7 +118,7 @@ def call_gemini_with_prompt(prompt: str, input_text: str):
         HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE, # type: ignore
     })
 
-    formatted_response = extract_json_from_text(gemini_response.text )
+    formatted_response = extract_json_from_text(gemini_response.text)
 
     return(formatted_response)
 
@@ -149,29 +147,26 @@ async def generate_answer(query: Query = Body(...)):
         filter_conditions["medicine_name"] = medicine_name
     if medicine_composition:
         filter_conditions["composition"] = medicine_composition
-    # if disease:
-    #     filter_conditions["disease"] = disease
 
     # Perform the Astra DB find operation with the constructed filter
     # Check if disease is present for vector search
     if disease != '':
-        # Perform the Astra DB find operation with vectorization
-        vector_results = my_collection.find(
-            filter=filter_conditions,
-            sort={"$vectorize": disease},
-            limit=query.limit,
-            projection={"$vectorize": True},
-            include_similarity=True,
-        )
+        try:
+            vector_results = my_collection.find(
+                filter=filter_conditions,
+                sort={"$vectorize": disease},
+                limit=query.limit,
+                projection={"$vectorize": True},
+                include_similarity=True,
+            )
+        except Exception as e:
+            print(f"Error occurred while querying Astra DB with vectorization: {e}")
+            vector_results = []
     else:
-        print("serching with json")
         # If no disease, find using only the other filter conditions
         vector_results = search_medicines(filter_conditions, query.limit)
 
-    # data = [item.to_dict() for item in vector_results]
-    data = vector_results
-    # print(data)
-    # Prepare detailed information for Gemini's second call
+    data = list(vector_results)
     medicine_details = []
     if data:
         for item in data[:5]:
@@ -195,13 +190,11 @@ async def generate_answer(query: Query = Body(...)):
     gemini_response = model.generate_content(context)
     print(gemini_json_response)
     print(data)
-    # print(gemini_response)
 
     return {
         "data": data,
         "gemini_answer": gemini_response.text
     }
-
 
 prompt = """
 Instructions
