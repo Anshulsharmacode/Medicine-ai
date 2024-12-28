@@ -8,11 +8,18 @@ from pydantic import BaseModel
 import astrapy
 import json
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 app = FastAPI()
-
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 
